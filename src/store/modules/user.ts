@@ -3,19 +3,20 @@
 
 import { createSlice } from "@reduxjs/toolkit";
 import { http } from "@/service";
+import { setToken as _setToken, getToken } from "@/utils";
 
 const userStore = createSlice({
   name: "user",
   // 初始化相关的状态
   initialState: {
-    token: localStorage.getItem("token") || "",
+    token: getToken() || "",
   },
   // 同步修改方法
   reducers: {
     setToken(state, action) {
       state.token = action.payload;
       // 手动持久化存储：往localStorage存储token
-      localStorage.setItem("token", action.payload);
+      _setToken(action.payload);
     },
   },
 });
