@@ -1,3 +1,4 @@
+import { getToken } from "@/utils";
 import axios from "axios";
 
 const http = axios.create({
@@ -8,6 +9,11 @@ const http = axios.create({
 // 添加请求拦截器
 http.interceptors.request.use(
   (config) => {
+    // 操作config，注入token
+    const token = getToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => {
