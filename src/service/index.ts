@@ -2,7 +2,7 @@ import axios from "axios";
 
 const http = axios.create({
   baseURL: "http://geek.itheima.net/v1_0",
-  timeout: 5000,
+  timeout: 500000,
 });
 
 // 添加请求拦截器

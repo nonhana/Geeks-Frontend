@@ -1,0 +1,35 @@
+// src/store/modules/user.ts
+// 放置和用户相关的状态管理
+
+import { createSlice } from "@reduxjs/toolkit";
+import { http } from "@/service";
+
+const userStore = createSlice({
+  name: "user",
+  // 初始化相关的状态
+  initialState: {
+    token: "",
+  },
+  // 同步修改方法
+  reducers: {
+    setToken(state, action) {
+      state.token = action.payload;
+    },
+  },
+});
+
+const { setToken } = userStore.actions;
+const userReducer = userStore.reducer;
+
+// 异步方法
+const fetchLogin = (loginForm: any) => {
+  return async (dispatch: any) => {
+    // 1. 发送异步请求
+    const res = await http.post("/authorizations", loginForm);
+    // 2. 提交同步action进行token的存入
+    dispatch(setToken(res.data.token));
+  };
+};
+
+export { fetchLogin, setToken };
+export default userReducer;
