@@ -3,7 +3,7 @@
 import { getToken } from "@/utils";
 import { Navigate } from "react-router-dom";
 
-function AuthRoute(props: { children: React.ReactNode }) {
+function AuthRoute(props: { children: any }) {
   const token = getToken();
   if (token) {
     return props.children;
