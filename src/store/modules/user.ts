@@ -3,7 +3,7 @@
 
 import { createSlice } from "@reduxjs/toolkit";
 import { http } from "@/service";
-import { setToken as _setToken, getToken } from "@/utils";
+import { setToken as _setToken, getToken, removeToken } from "@/utils";
 
 const userStore = createSlice({
   name: "user",
@@ -22,10 +22,15 @@ const userStore = createSlice({
     setUserInfo(state, action) {
       state.userInfo = action.payload;
     },
+    reset(state) {
+      state.token = "";
+      state.userInfo = {};
+      removeToken();
+    },
   },
 });
 
-const { setToken, setUserInfo } = userStore.actions;
+const { setToken, setUserInfo, reset } = userStore.actions;
 const userReducer = userStore.reducer;
 
 // 异步方法
@@ -46,5 +51,5 @@ const fetchUserInfo = () => {
   };
 };
 
-export { fetchLogin, setToken, fetchUserInfo };
+export { fetchLogin, setToken, fetchUserInfo, reset };
 export default userReducer;
