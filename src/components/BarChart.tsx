@@ -14,6 +14,7 @@ interface BarChartProps {
   data: number[];
 }
 
+// 使用React.FC类型来定义函数组件，这样可以获得更好的类型推断，内部可以传递泛型
 const BarChart: React.FC<BarChartProps> = ({ title, categories, data }) => {
   // 使用定义好的接口作为泛型参数传递给React.FC
   const chartRef = useRef<HTMLDivElement | null>(null); // 明确地声明chartRef是对HTMLDivElement的引用，初始值为null
