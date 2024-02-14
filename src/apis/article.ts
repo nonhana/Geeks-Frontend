@@ -20,3 +20,12 @@ export const publishArticleAPI = (data: ArticleData) => {
     data: formData,
   });
 };
+
+// 获取文章列表
+export const getArticleListAPI = (params: any) => {
+  return http({
+    url: "/mp/articles",
+    method: "GET",
+    params,
+  });
+};

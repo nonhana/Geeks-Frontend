@@ -8,46 +8,37 @@ import {
   Upload,
   Space,
   Select,
+  message,
 } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { Link } from "react-router-dom";
 import "./index.scss";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
-import { useEffect, useState } from "react";
-import { getChannelAPI, publishArticleAPI } from "@/apis/article";
+import { useState } from "react";
+import { publishArticleAPI } from "@/apis/article";
 import { ArticleData } from "@/utils/types";
+import { useChannel } from "@/hooks/useChannels";
 
 const { Option } = Select;
 
 const Publish = () => {
-  // 获取频道列表
-  const [channelList, setChannelList] = useState([]);
-  useEffect(() => {
-    // 1. 封装函数，在函数体内部调用接口
-    const getChannelList = async () => {
-      const {
-        data: { channels },
-      } = await getChannelAPI();
-      setChannelList(channels);
-    };
-    // 2. 调用函数
-    getChannelList();
-  }, []);
+  const { channelList } = useChannel();
 
   // 提交表单
   const onFinish = async (values: any) => {
-    console.log("Success:", values);
+    // 校验封面类型是否和实际的图片数量匹配
+    if (imageList.length !== imageType)
+      return message.warning("请选择正确数量的封面图片");
     const { title, content, channel_id } = values;
     // 按照接口文档的格式处理表单数据
-
     const formData: ArticleData = {
       draft: false,
       title,
       content,
       cover: {
-        type: 0,
-        images: [],
+        type: imageType,
+        images: imageList.map((item: any) => item.response.data.url),
       },
       channel_id,
     };
@@ -123,6 +114,7 @@ const Publish = () => {
                 showUploadList
                 action={"http://geek.itheima.net/v1_0/upload"}
                 onChange={onUploadChange}
+                maxCount={imageType}
               >
                 <div style={{ marginTop: 8 }}>
                   <PlusOutlined />
