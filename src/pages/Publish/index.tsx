@@ -16,6 +16,7 @@ import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { useEffect, useState } from "react";
 import { getChannelAPI, publishArticleAPI } from "@/apis/article";
+import { ArticleData } from "@/utils/types";
 
 const { Option } = Select;
 
@@ -39,17 +40,8 @@ const Publish = () => {
     console.log("Success:", values);
     const { title, content, channel_id } = values;
     // 按照接口文档的格式处理表单数据
-    interface formType {
-      draft: boolean;
-      title: string;
-      content: string;
-      cover: {
-        type: number;
-        images: string[];
-      };
-      channel_id: number;
-    }
-    const formData: formType = {
+
+    const formData: ArticleData = {
       draft: false,
       title,
       content,
@@ -61,6 +53,12 @@ const Publish = () => {
     };
     // 调用接口提交
     await publishArticleAPI(formData);
+  };
+
+  // 上传图片
+  const [imageList, setImageList] = useState([]);
+  const onUploadChange = (info: any) => {
+    setImageList(info.fileList);
   };
   return (
     <div className="publish">
@@ -99,6 +97,30 @@ const Publish = () => {
                 </Option>
               ))}
             </Select>
+          </Form.Item>
+          <Form.Item label="封面">
+            <Form.Item name="type">
+              <Radio.Group>
+                <Radio value={1}>单图</Radio>
+                <Radio value={3}>三图</Radio>
+                <Radio value={0}>无图</Radio>
+              </Radio.Group>
+            </Form.Item>
+            {/* 
+              listType="picture-card"：以卡片形式展示
+              showUploadList：展示上传列表
+            */}
+            <Upload
+              name="image"
+              listType="picture-card"
+              showUploadList
+              action={"http://geek.itheima.net/v1_0/upload"}
+              onChange={onUploadChange}
+            >
+              <div style={{ marginTop: 8 }}>
+                <PlusOutlined />
+              </div>
+            </Upload>
           </Form.Item>
           <Form.Item
             label="内容"
