@@ -9,3 +9,13 @@ export const getChannelAPI = () => {
     method: "GET",
   });
 };
+
+// 发布文章
+export const publishArticleAPI = (data: any) => {
+  const { draft, ...formData } = data;
+  return http({
+    url: `/mp/articles?draft=${draft}`,
+    method: "POST",
+    data: formData,
+  });
+};
