@@ -29,3 +29,28 @@ export const getArticleListAPI = (params: any) => {
     params,
   });
 };
+
+// 删除文章
+export const deleteArticleAPI = (id: string) => {
+  return http({
+    url: `/mp/articles/${id}`,
+    method: "DELETE",
+  });
+};
+
+// 获取文章详情
+export const getArtilceDetailAPI = (id: string) => {
+  return http({
+    url: `/mp/articles/${id}`,
+    method: "GET",
+  });
+};
+
+// 编辑文章
+export const editArticleAPI = (id: string, data: ArticleData) => {
+  return http({
+    url: `/mp/articles/${id}?draft=false`,
+    method: "PUT",
+    data,
+  });
+};

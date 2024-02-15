@@ -11,12 +11,16 @@ import {
   message,
 } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import "./index.scss";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
-import { useState } from "react";
-import { publishArticleAPI } from "@/apis/article";
+import { useEffect, useState } from "react";
+import {
+  editArticleAPI,
+  getArtilceDetailAPI,
+  publishArticleAPI,
+} from "@/apis/article";
 import { ArticleData } from "@/utils/types";
 import { useChannel } from "@/hooks/useChannels";
 
@@ -38,17 +42,28 @@ const Publish = () => {
       content,
       cover: {
         type: imageType,
-        images: imageList.map((item: any) => item.response.data.url),
+        // 这里的url处理逻辑只是在新增的时候进行处理的
+        images: imageList.map((item: any) => {
+          if (item.response) return item.response.data.url;
+          return item.url;
+        }),
       },
       channel_id,
     };
     // 调用接口提交
-    await publishArticleAPI(formData);
+    // 调用不同的接口：新增/编辑
+    if (articleId) {
+      // 更新接口
+      await editArticleAPI(articleId, formData);
+    } else {
+      await publishArticleAPI(formData);
+    }
   };
 
   // 上传图片
   const [imageList, setImageList] = useState([]);
   const onUploadChange = (info: any) => {
+    console.log(info.fileList);
     setImageList(info.fileList);
   };
 
@@ -57,6 +72,33 @@ const Publish = () => {
     console.log(e.target.value);
     setImageType(e.target.value);
   };
+
+  // 回填数据
+  const [searchParams] = useSearchParams(); // useSearchParams是一个hook，用于获取url中的查询参数
+  const articleId = searchParams.get("id");
+  // 获取表单实例
+  const [form] = Form.useForm();
+  useEffect(() => {
+    // 1. 根据id获取数据
+    async function getArticleDetail() {
+      if (!articleId) return;
+      const res = await getArtilceDetailAPI(articleId);
+      form.setFieldsValue({
+        ...res.data,
+        type: res.data.cover.type,
+      });
+      // 回填图片列表
+      setImageType(res.data.cover.type);
+      setImageList(
+        res.data.cover.images.map((url: string) => ({
+          url,
+        }))
+      );
+    }
+    getArticleDetail();
+    // 2. 调用实例方法，完成回填
+  }, [articleId, form]);
+
   return (
     <div className="publish">
       <Card
@@ -64,7 +106,7 @@ const Publish = () => {
           <Breadcrumb
             items={[
               { title: <Link to={"/"}>首页</Link> },
-              { title: "发布文章" },
+              { title: `${articleId ? "编辑" : "发布"}文章` },
             ]}
           />
         }
@@ -74,6 +116,7 @@ const Publish = () => {
           wrapperCol={{ span: 16 }}
           initialValues={{ type: 0 }}
           onFinish={onFinish}
+          form={form}
         >
           <Form.Item
             label="标题"
@@ -115,6 +158,7 @@ const Publish = () => {
                 action={"http://geek.itheima.net/v1_0/upload"}
                 onChange={onUploadChange}
                 maxCount={imageType}
+                fileList={imageList}
               >
                 <div style={{ marginTop: 8 }}>
                   <PlusOutlined />

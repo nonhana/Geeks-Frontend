@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Card,
   Breadcrumb,
@@ -7,6 +7,7 @@ import {
   Radio,
   DatePicker,
   Select,
+  Popconfirm,
 } from "antd";
 // 引入汉化包，使日期选择器显示中文
 import locale from "antd/es/date-picker/locale/zh_CN";
@@ -16,18 +17,27 @@ import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import img404 from "@/assets/imgs/error.png";
 import { useChannel } from "@/hooks/useChannels";
 import { useEffect, useState } from "react";
-import { getArticleListAPI } from "@/apis/article";
+import { deleteArticleAPI, getArticleListAPI } from "@/apis/article";
+import { Filter } from "@/utils/types";
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 
 const Article = () => {
+  const navigate = useNavigate();
   const { channelList } = useChannel();
   // 定义状态枚举
   const statusMap: Map<number, JSX.Element> = new Map([
     [0, <Tag color="warning">待审核</Tag>],
     [2, <Tag color="success">审核通过</Tag>],
   ]);
+
+  // 删除
+  const onConfirm = async (data: any) => {
+    console.log(data);
+    await deleteArticleAPI(data.id);
+    setReqData({ ...reqData }); // 单纯的刷新列表
+  };
   // 准备列数据
   const columns = [
     {
@@ -74,29 +84,74 @@ const Article = () => {
       render: (data: any) => {
         return (
           <Space size="middle">
-            <Button type="primary" shape="circle" icon={<EditOutlined />} />
             <Button
               type="primary"
-              danger
               shape="circle"
-              icon={<DeleteOutlined />}
+              icon={<EditOutlined />}
+              onClick={() => navigate(`/publish?id=${data.id}`)}
             />
+            <Popconfirm
+              title="删除文章"
+              description="确定要删除这篇文章吗？"
+              onConfirm={() => onConfirm(data)}
+              okText="确定"
+              cancelText="取消"
+            >
+              <Button
+                type="primary"
+                danger
+                shape="circle"
+                icon={<DeleteOutlined />}
+              />
+            </Popconfirm>
           </Space>
         );
       },
     },
   ];
+
+  // 筛选功能实现
+  // 1. 准备参数
+  const [reqData, setReqData] = useState<Filter>({
+    begin_pubdate: "",
+    channel_id: "",
+    end_pubdate: "",
+    page: "1",
+    per_page: "10",
+    status: "",
+  });
+  // 2. 获取筛选数据
+  const onFinish = async (values: any) => {
+    console.log(values);
+    // 3. 把收集到的数据放到reqData中（不可变的方式）
+    setReqData({
+      ...reqData,
+      begin_pubdate: values.date[0].format("YYYY-MM-DD"),
+      end_pubdate: values.date[1].format("YYYY-MM-DD"),
+      status: values.status,
+      channel_id: values.channel_id,
+    });
+    // 4. 重新拉取文章列表并渲染
+    // reqData发生变化后，会直接触发useEffect，重新拉取文章列表，无需手动调用
+  };
+
   // 获取文章列表
   const [list, setList] = useState([]);
   const [count, setCount] = useState(0);
   useEffect(() => {
     async function getList() {
-      const res = await getArticleListAPI({});
-      setList(res.data.result);
+      const res = await getArticleListAPI(reqData);
+      setList(res.data.results);
       setCount(res.data.total_count);
     }
     getList();
-  }, []);
+  }, [reqData]);
+
+  // 分页功能实现
+  const onPageChange = (page: number) => {
+    setReqData({ ...reqData, page: page.toString() });
+  };
+
   return (
     <div>
       <Card
@@ -110,7 +165,7 @@ const Article = () => {
         }
         style={{ marginBottom: 20 }}
       >
-        <Form initialValues={{ status: "" }}>
+        <Form initialValues={{ status: "" }} onFinish={onFinish}>
           <Form.Item label="状态" name="status">
             <Radio.Group>
               <Radio value={""}>全部</Radio>
@@ -120,11 +175,7 @@ const Article = () => {
           </Form.Item>
 
           <Form.Item label="频道" name="channel_id">
-            <Select
-              placeholder="请选择文章频道"
-              defaultValue="lucy"
-              style={{ width: 120 }}
-            >
+            <Select placeholder="请选择文章频道" style={{ width: 240 }}>
               {channelList.map((item: any) => (
                 <Option key={item.id} value={item.id}>
                   {item.name}
@@ -146,7 +197,16 @@ const Article = () => {
         </Form>
       </Card>
       <Card title={`根据筛选条件共查询到 ${count} 条结果：`}>
-        <Table rowKey="id" columns={columns} dataSource={list} />
+        <Table
+          rowKey="id"
+          columns={columns}
+          dataSource={list}
+          pagination={{
+            total: count,
+            pageSize: Number(reqData.per_page),
+            onChange: onPageChange,
+          }}
+        />
       </Card>
     </div>
   );
